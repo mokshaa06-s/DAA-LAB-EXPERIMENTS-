@@ -1,0 +1,85 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMhJJD6HRKUArx4gNF7lAHS",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/mokshaa06-s/DAA-LAB-EXPERIMENTS-/blob/main/DAA%208\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oNBR1mVv8DCs"
+      },
+      "outputs": [],
+      "source": [
+        "def matrix_chain_order(dims):     \"\"\"     Matrix Chain Multiplication using DP     dims: list of dimensions, matrix i has dims[i-1] x dims[i]     Time: O(n^3), Space: O(n^2)     \"\"\"     n = len(dims) - 1     # m[i][j] = minimum multiplications for matrices i..j     m = [[0] * (n + 1) for _ in range(n + 1)]     s = [[0] * (n + 1) for _ in range(n + 1)]       # l is the chain length     for l in range(2, n + 1):         for i in range(1, n - l + 2):             j = i + l - 1             m[i][j] = float('inf')             for k in range(i, j):                 cost = m[i][k] + m[k+1][j] + dims[i-1] * dims[k] * dims[j]                 if cost < m[i][j]:                     m[i][j] = cost                     s[i][j] = k     return m, s   def print_optimal_parens(s, i, j):     if i == j:         return f'A{i}'     k = s[i][j]     left  = print_optimal_parens(s, i, k)     right = print_optimal_parens(s, k + 1, j)     return f'({left} x {right})'   def print_dp_table(m, n):     print('\\nDP Cost Table m[i][j]:')     print(f'{\"\":>6}', end='')     for j in range(1, n + 1):         print(f'A{j:>8}', end='')     print()     for i in range(1, n + 1):         print(f'A{i:<5}', end='')         for j in range(1, n + 1):             if j < i: print(f'{\"---\":>9}', end='')             else: print(f'{m[i][j]:>9}', end='')         print()   # A1(10x30), A2(30x5), A3(5x60), A4(60x10) dims = [10, 30, 5, 60, 10] n    = len(dims) - 1 print(f'Matrix Dimensions:') for i in range(n):     print(f'  A{i+1}: {dims[i]} x {dims[i+1]}')   m, s = matrix_chain_order(dims) print(f'\\nMinimum scalar multiplications: {m[1][n]}') print(f'Optimal parenthesization: {print_optimal_parens(s, 1, n)}') print_dp_table(m, n)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def is_safe(board, row, col):     for prev_row in range(row):         placed = board[prev_row]  Ex. No. 7                                     Solving N-Queens Problem using Backtracking                           CS5303 – DAA Lab Chennai Institute of Technology | Dept. of CSE | Page 25         if placed == col:  # Same column             return False         if abs(prev_row - row) == abs(placed - col):  # Diagonal             return False     return True   def solve_n_queens(n):     board     = [-1] * n     solutions = []     backtrack_count = [0]       def backtrack(row):         if row == n:             solutions.append(board[:])             return         for col in range(n):             if is_safe(board, row, col):                 board[row] = col                 backtrack(row + 1)                 board[row] = -1  # Undo                 backtrack_count[0] += 1       backtrack(0)     return solutions, backtrack_count[0]   def display_board(solution, n):     print('  +' + '---+' * n)     for row in range(n):         print('  |', end='')         for col in range(n):             if solution[row] == col:                 print(' Q |', end='')             else:                 print(' . |', end='')         print()         print('  +' + '---+' * n)   # --- Solve for N=4 (show all) and N=8 (count only) --- for n in [4, 6, 8]:     solutions, backtracks = solve_n_queens(n)     print(f'N={n}: {len(solutions)} solutions, {backtracks} backtracks')     if n == 4:         print(f'\\n  All solutions for {n}-Queens:')         for i, sol in enumerate(solutions, 1):             print(f'\\n  Solution {i}: {sol}')             display_board(sol, n)"
+      ],
+      "metadata": {
+        "id": "rydCOw318940"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import heapq from itertools import permutations   INF = float('inf')   def reduce_matrix(mat):     \"\"\"Reduce matrix and return reduction cost\"\"\"     import copy     m = [row[:] for row in mat]     n = len(m)     cost = 0     # Row reduction     for i in range(n):         row_min = min(m[i])         if row_min and row_min != INF:             cost += row_min             m[i] = [x - row_min if x != INF else INF for x in m[i]]     # Column reduction     for j in range(n):         col_min = min(m[i][j] for i in range(n))         if col_min and col_min != INF:             cost += col_min             for i in range(n):                 if m[i][j] != INF:                     m[i][j] -= col_min     return m, cost   def tsp_brute_force(cost, n):     \"\"\"Brute force for verification\"\"\"     cities = list(range(1, n))     best_cost = INF     best_path = None     for perm in permutations(cities):         path = [0] + list(perm) + [0]         c = sum(cost[path[i]][path[i+1]] for i in range(n))         if c < best_cost:             best_cost = c             best_path = path     return best_path, best_cost   # --- 5-city cost matrix --- cost = [     [INF,  10,   8,   9,   7],     [ 10, INF,  10,   5,   6],     [  8,  10, INF,   8,   9],     [  9,   5,   8, INF,   6],     [  7,   6,   9,   6, INF] ] n = 5 cities = ['A', 'B', 'C', 'D', 'E']   best_path, best_cost = tsp_brute_force(cost, n)   print('5-City TSP - Cost Matrix:') print(f'{\"\":>4}', ' '.join(f'{c:>5}' for c in cities)) for i, row in enumerate(cost):     r = ['INF' if x == INF else str(x) for x in row]     print(f'{cities[i]:>4}', ' '.join(f'{v:>5}' for v in r))  Ex. No. 8    Travelling Salesman Problem using Branch and Bound for Finding Optimal Path        CS5303 – DAA Lab Chennai Institute of Technology | Dept. of CSE | Page 29   print(f'\\nOptimal Tour: {\" -> \".join(cities[i] for i in best_path)}') print(f'Minimum Cost: {best_cost}') print(f'\\nPath verification:') for i in range(n):     u, v = best_path[i], best_path[i+1]     print(f'  {cities[u]} -> {cities[v]}: cost = {cost[u][v]}')"
+      ],
+      "metadata": {
+        "id": "ARNNawu89Mo-"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def first_fit(items, capacity=1.0):     bins = []  # Each bin stores remaining space     bin_contents = []     for item in items:         placed = False         for i, space in enumerate(bins):             if space >= item:                 bins[i] -= item                 bin_contents[i].append(item)                 placed = True                 break         if not placed:             bins.append(capacity - item)             bin_contents.append([item])     return bin_contents   def first_fit_decreasing(items, capacity=1.0):     return first_fit(sorted(items, reverse=True), capacity)   def best_fit_decreasing(items, capacity=1.0):     sorted_items = sorted(items, reverse=True)     bins = []     bin_contents = []     for item in sorted_items:         best_idx = -1         best_space = float('inf')         for i, space in enumerate(bins):             if space >= item and space - item < best_space:                 best_space = space - item                 best_idx = i         if best_idx >= 0:             bins[best_idx] -= item             bin_contents[best_idx].append(item)         else:             bins.append(capacity - item)             bin_contents.append([item])     return bin_contents   def display_bins(label, bins):     print(f'\\n{label}: {len(bins)} bins')     for i, b in enumerate(bins, 1):         used = sum(b)         bar = '#' * int(used * 20)         print(f'  Bin {i}: {[round(x,1) for x in b]} | Used: {used:.1f} '\",\"               f'[{bar:<20}]')   items = [0.5, 0.7, 0.3, 0.9, 0.2, 0.6, 0.8, 0.4, 0.1, 0.5] capacity = 1.0 lower_bound = -(-sum(items) // capacity)  # Ceiling division   print(f'Items: {items}') print(f'Capacity: {capacity}') print(f'Sum of items: {sum(items)}') print(f'Lower bound on bins: {int(lower_bound)}')   ff_bins  = first_fit(items) ffd_bins = first_fit_decreasing(items) bfd_bins = best_fit_decreasing(items)  Ex. No. 9                              Efficient Bin Packing using Approximation Algorithm                           CS5303 – DAA Lab Chennai Institute of Technology | Dept. of CSE | Page 33   display_bins('First Fit (FF)',           ff_bins) display_bins('First Fit Decreasing (FFD)', ffd_bins) display_bins('Best Fit Decreasing (BFD)', bfd_bins)   print(f'\\nSummary: Lower Bound={int(lower_bound)}, FF={len(ff_bins)}, FFD={len(ffd_bins)}, BFD={len(bfd_bins)}')     SAM"
+      ],
+      "metadata": {
+        "id": "Im8-2Hme9Xqm"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Python)     import random import time import sys sys.setrecursionlimit(20000)   comparisons = 0   def partition(arr, low, high):     global comparisons     pivot = arr[high]     i = low - 1     for j in range(low, high):         comparisons += 1         if arr[j] <= pivot:             i += 1             arr[i], arr[j] = arr[j], arr[i]     arr[i + 1], arr[high] = arr[high], arr[i + 1]     return i + 1   def deterministic_quicksort(arr, low, high):     if low < high:         pi = partition(arr, low, high)         deterministic_quicksort(arr, low, pi - 1)         deterministic_quicksort(arr, pi + 1, high)   def randomized_quicksort(arr, low, high):     if low < high:         # Randomize pivot         rand_idx = random.randint(low, high)         arr[rand_idx], arr[high] = arr[high], arr[rand_idx]         pi = partition(arr, low, high)         randomized_quicksort(arr, low, pi - 1)         randomized_quicksort(arr, pi + 1, high)   def run_test(name, sort_fn, arr):     global comparisons     a = arr[:]     comparisons = 0     start = time.perf_counter()     sort_fn(a, 0, len(a) - 1)     elapsed = (time.perf_counter() - start) * 1000     return comparisons, elapsed   N = 5000 test_cases = {     'Random'      : [random.randint(1, 100000) for _ in range(N)],     'Sorted'      : list(range(N)),     'Reverse'     : list(range(N, 0, -1)),     'Nearly Sorted': list(range(N)) } # Make Nearly Sorted slightly shuffled ns = test_cases['Nearly Sorted'] for _ in range(N // 20):     i, j = random.randint(0, N-1), random.randint(0, N-1)     ns[i], ns[j] = ns[j], ns[i]   print(f'{'Input Type':<16} {'DQS Comps':>12} {'DQS Time(ms)':>14} '\",\"       f'{'RQS Comps':>12} {'RQS Time(ms)':>14}')  Ex. No. 10                         Improving Quick Sort Efficiency using Randomized Algorithm               CS5303 – DAA Lab Chennai Institute of Technology | Dept. of CSE | Page 37 print('-' * 72) for case, arr in test_cases.items():     d_comps, d_time = run_test('DQS', deterministic_quicksort, arr)     r_comps, r_time = run_test('RQS', randomized_quicksort,    arr)     print(f'{case:<16} {d_comps:>12} {d_time:>14.2f} {r_comps:>12} {r_time:>14.2f}')"
+      ],
+      "metadata": {
+        "id": "lG8_GLRB9tm2"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
